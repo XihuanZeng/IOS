@@ -10,12 +10,18 @@ import UIKit
 
 class CalculatorViewController: UIViewController {
 
+    // LifeCycle function
+    override func viewDidLoad() {
+        initAll()
+    }
+    
     //Outlet
     @IBOutlet weak var screen: UILabel!
     
     //Variables
     var enteringNumber = false
     var operand = [Double]()
+    var calModel: CalModel?
     
     //Computed Property
     var screenValue: Double{
@@ -38,26 +44,39 @@ class CalculatorViewController: UIViewController {
         }
     }
     
-    @IBAction func initAll(_ sender: UIButton) {
+    @IBAction func initAll() {
         screenValue = 0.0
         enteringNumber = false
+        calModel = CalModel()
     }
 
     @IBAction func operationPressed(_ sender: UIButton) {
-        
         enteringNumber = false
-        if operand.count < 1 {
-            operand.append(screenValue)
-            print("Not enough operand")
-            return
+        
+        equals()
+        
+        do {
+            try calModel?.appendOperation(op1: screenValue, operatonSymbol: sender.currentTitle!)
         }
-        switch sender.currentTitle! {
-        case "+":
-            screenValue = operand.popLast()! + screenValue
-        default:
-            print("Cannot recognize operation")
+        catch CalModel.OperationError.UnrecognizedOperationError(let errorMessage){
+            print(errorMessage)
+        }
+        catch {
+            print("executeOperation other exception \(error)")
         }
     }
     
     
+    @IBAction func equals() {
+        do {
+            try screenValue = (calModel?.executeOperation(op2: screenValue))!
+            enteringNumber = false
+        }
+        catch CalModel.OperationError.NotEnoughOperation {
+            print ("do not have operations to run")
+        }
+        catch {
+            print("executeOperation other exception \(error)")
+        }
+    }
 }
